@@ -82,7 +82,7 @@ char	*ft_strdup(const char *s)
 	return (p);
 }
 
-char	*ft_getline(char *c)
+char	*ft_getline(char *c, int *x)
 {
 	char	*end;
 	int		i;
@@ -94,16 +94,49 @@ char	*ft_getline(char *c)
 		i++;
 	if (c[i] == '\n')
 		i++;
+	*x = i;
 	end = malloc((i + 1) * sizeof(char));
 	if (!end)
-	{
-		free(c);
 		return (NULL);
-	}
 	end[i] = '\0';
 	while (--i >= 0)
 		end[i] = c[i];
 	return (end);
+}
+
+char	*ft_reading(int fd, char *buf, int *res)
+{
+	char	*mem;
+	char	*tmp;
+
+	while (!ft_strchr(buf), *res)
+	{
+		*res = read(fd, buf, BUFFER_SIZE);
+		if (*res > 0)
+		{
+			buf[*res] = '\0';
+			if (mem)
+			{
+				tmp = mem;
+				mem = ft_strjoin(mem);
+				free(tmp);
+				tmp = NULL;
+			}
+		}
+	}
+	return (mem);
+}
+
+char	*ft_get_the_rest(char *save ,int res)
+{
+	char	*env;
+
+	env = NULL;
+	if (res > 0 && *save)
+	{
+		env = ft_strdup(save, res);
+	}
+	return (env);
 }
 
 char	*get_next_line(int fd)
@@ -113,27 +146,24 @@ char	*get_next_line(int fd)
 	int			res;
 	char		*buf;
 
-	if (fd < 0)
+	if (fd < 0 || BUFFER_SIZE > 0)
 		return (NULL);
-	save = NULL;
 	buf = malloc((BUFFER_SIZE + 1) * sizeof(char));
 	if (!buf)
 		return (NULL);
-	while ((res = read(fd, buf, BUFFER_SIZE)) || !ft_strchr(save, '\n'))
+	res = 0;
+	save = ft_reading(fd, buf, &res);
+	free(buf);
+	buf = NULL;
+	line = ft_getline(save, &res);
+	if (!line)
 	{
-		if (!save && res)
-			save = ft_strdup(buf);
-		else if (save && res)
-			save = ft_strjoin(save, buf);
-		free(buf);
-		buf = malloc((BUFFER_SIZE + 1) * sizeof(char));
-		if (!buf)
-		{
-			free(save);
-			return (NULL);
-		}
-
+		free(save);
+		save = NULL;
 	}
-	line = ft_getline((char *) save);
+	buf = save;
+	save = ft_get_the_rest(save ,res);
+	free(buf);
+	buf = NULL:
 	return (line);
 }
