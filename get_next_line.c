@@ -6,7 +6,7 @@
 /*   By: sakllam <sakllam@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/11 14:39:57 by sakllam           #+#    #+#             */
-/*   Updated: 2021/11/11 17:19:56 by sakllam          ###   ########.fr       */
+/*   Updated: 2021/11/13 20:06:36 by sakllam          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,15 @@ size_t	ft_strlen(const char *s)
 	while (s[i])
 		i++;
 	return (i);
+}
+
+void	ft_free(void **c)
+{
+	if (*c)
+	{
+		free(*c);
+		*c = NULL;
+	}
 }
 
 char	*ft_strchr(const char *s, int c)
@@ -104,27 +113,51 @@ char	*ft_getline(char *c, int *x)
 	return (end);
 }
 
-char	*ft_reading(int fd, char *buf, int *res)
-{
+char	*ft_firstread(int *res, int fd)
+{	
 	char	*mem;
-	char	*tmp;
+	char	*buf;
 
-	while (!ft_strchr(buf), *res)
+	buf = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!buf)
+		return (NULL);
+	mem = NULL;
+	*res = read(fd, buf, BUFFER_SIZE);
+	if (*res > 0)
+	{
+		buf[*res] = '\0';
+		mem = ft_strdup(buf);
+	}
+	ft_free((void *) &buf);
+	return (mem);
+}
+
+
+char	*ft_reading(int fd, char *save, int *res)
+{
+	char	*tmp;
+	char	*buf;
+
+	*res = 1;
+	if (!save)
+		save = ft_firstread(res, fd);
+	buf = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!buf)
+		return (NULL);
+	while (save && !ft_strchr(save, '\n') && *res == BUFFER_SIZE)
 	{
 		*res = read(fd, buf, BUFFER_SIZE);
 		if (*res > 0)
 		{
 			buf[*res] = '\0';
-			if (mem)
-			{
-				tmp = mem;
-				mem = ft_strjoin(mem);
-				free(tmp);
-				tmp = NULL;
-			}
+			tmp = save;
+			save = ft_strjoin(save, buf);
+			if (tmp)
+				ft_free((void *) &tmp);
 		}
 	}
-	return (mem);
+	ft_free((void *) &buf);
+	return (save);
 }
 
 char	*ft_get_the_rest(char *save ,int res)
@@ -132,9 +165,9 @@ char	*ft_get_the_rest(char *save ,int res)
 	char	*env;
 
 	env = NULL;
-	if (res > 0 && *save)
+	if (res > 0)
 	{
-		env = ft_strdup(save, res);
+		env = ft_strdup(&save[res]);
 	}
 	return (env);
 }
@@ -143,27 +176,29 @@ char	*get_next_line(int fd)
 {
 	char		*line;
 	static char	*save;
+	char		*tmp;
+	int			count;
 	int			res;
-	char		*buf;
 
-	if (fd < 0 || BUFFER_SIZE > 0)
+	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
-	buf = malloc((BUFFER_SIZE + 1) * sizeof(char));
-	if (!buf)
-		return (NULL);
-	res = 0;
-	save = ft_reading(fd, buf, &res);
-	free(buf);
-	buf = NULL;
-	line = ft_getline(save, &res);
-	if (!line)
+	save = ft_reading(fd, save, &res);
+	if (!save)
+		return (NULL); //this is true
+	line = ft_getline(save, &count);
+	if (line[count - 1] != '\n' || !line)
+		ft_free((void*) &save);
+	if (save)
 	{
-		free(save);
-		save = NULL;
+		tmp = save;
+		save = ft_get_the_rest(save ,count);
+		if (save)
+			ft_free((void*) &tmp);
 	}
-	buf = save;
-	save = ft_get_the_rest(save ,res);
-	free(buf);
-	buf = NULL:
+	if (res < 0)
+	{
+		line = NULL;
+		ft_free((void*) &save);
+	}
 	return (line);
 }
