@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: sakllam <sakllam@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/11/09 16:39:37 by sakllam           #+#    #+#             */
-/*   Updated: 2021/11/13 19:34:41 by sakllam          ###   ########.fr       */
+/*   Created: 2021/11/14 18:20:03 by sakllam           #+#    #+#             */
+/*   Updated: 2021/11/15 22:22:40 by sakllam          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,18 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <fcntl.h>
-#ifndef BUFFER_SIZE
-# define BUFFER_SIZE 1000000
-#endif
+#include <sys/types.h>
+#include <sys/uio.h>
+
+
+
 char	*get_next_line(int fd);
+void	ft_free(void **x);
+size_t	ft_strlen(const char *s);
+char	*ft_strjoin(char *s1, char const *s2);
+char	*ft_strchr(const char *s, int c);
+char	*ft_onlyline(char *b, int *c);
+char	*ft_the_rest(char *keep, int endofnl);
+int	ft_readline(int fd, char* buf, char **keep, int con);
 
 #endif

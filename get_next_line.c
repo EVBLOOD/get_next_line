@@ -5,200 +5,90 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: sakllam <sakllam@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/11/11 14:39:57 by sakllam           #+#    #+#             */
-/*   Updated: 2021/11/13 20:06:36 by sakllam          ###   ########.fr       */
+/*   Created: 2021/11/14 18:22:10 by sakllam           #+#    #+#             */
+/*   Updated: 2021/11/15 22:22:38 by sakllam          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-size_t	ft_strlen(const char *s)
-{
-	int	i;
-
-	i = 0;
-	while (s[i])
-		i++;
-	return (i);
-}
-
-void	ft_free(void **c)
-{
-	if (*c)
-	{
-		free(*c);
-		*c = NULL;
-	}
-}
-
-char	*ft_strchr(const char *s, int c)
-{
-	int	i;
-
-	i = 0;
-	while (s[i])
-	{
-		if (s[i] == (unsigned char)c)
-			return ((char *) &s[i]);
-		i++;
-	}
-	if ((unsigned char) c == '\0' && s)
-		return ((char *) &s[i]);
-	return (NULL);
-}
-
-char	*ft_strjoin(char const *s1, char const *s2)
-{
-	int		i;
-	int		k;
-	int		count;
-	char	*p;
-
-	if (!s1 || !s2)
-		return (NULL);
-	i = ft_strlen(s1);
-	k = ft_strlen(s2);
-	count = i + k + 1;
-	p = (char *) malloc(count * sizeof(char));
-	if (!p)
-		return (NULL);
-	i = 0;
-	k = i;
-	while (s1[k])
-		p[i++] = s1[k++];
-	k = 0;
-	while (s2[k])
-		p[i++] = s2[k++];
-	p[i] = '\0';
-	return (p);
-}
-
-char	*ft_strdup(const char *s)
+char	*ft_the_rest(char *keep, int endofnl)
 {
 	int		i;
 	char	*p;
-
-	i = 0;
-	p = (char *) malloc(ft_strlen(s) + 1);
-	if (!p)
-		return (0);
-	while (s[i])
-	{
-		p[i] = s[i];
-		i++;
-	}
-	p[i] = '\0';
-	return (p);
-}
-
-char	*ft_getline(char *c, int *x)
-{
-	char	*end;
-	int		i;
 	
 	i = 0;
-	if (!c)
-		return (NULL);
-	while (c[i] && c[i] != '\n')
-		i++;
-	if (c[i] == '\n')
-		i++;
-	*x = i;
-	end = malloc((i + 1) * sizeof(char));
-	if (!end)
-		return (NULL);
-	end[i] = '\0';
-	while (--i >= 0)
-		end[i] = c[i];
-	return (end);
-}
-
-char	*ft_firstread(int *res, int fd)
-{	
-	char	*mem;
-	char	*buf;
-
-	buf = malloc((BUFFER_SIZE + 1) * sizeof(char));
-	if (!buf)
-		return (NULL);
-	mem = NULL;
-	*res = read(fd, buf, BUFFER_SIZE);
-	if (*res > 0)
+	if (keep[endofnl] == '\0')
 	{
-		buf[*res] = '\0';
-		mem = ft_strdup(buf);
+		p = (char *) malloc(sizeof(char));
+		p[0] = '\0';
+		return (p);
 	}
-	ft_free((void *) &buf);
-	return (mem);
+	p = (char *) malloc(ft_strlen(&keep[endofnl]) + 1);
+	if (!p)
+		return (NULL);
+	while (keep[endofnl + i])
+	{
+		p[i] = keep[endofnl + i];
+		i++;
+	}
+	p[i] = '\0';
+	return (p);
 }
 
-
-char	*ft_reading(int fd, char *save, int *res)
+int	ft_readline(int fd, char* buf, char **keep, int con)
 {
 	char	*tmp;
-	char	*buf;
-
-	*res = 1;
-	if (!save)
-		save = ft_firstread(res, fd);
-	buf = malloc((BUFFER_SIZE + 1) * sizeof(char));
-	if (!buf)
-		return (NULL);
-	while (save && !ft_strchr(save, '\n') && *res == BUFFER_SIZE)
+	while (*keep && !ft_strchr(*keep, '\n') && con == BUFFER_SIZE )
 	{
-		*res = read(fd, buf, BUFFER_SIZE);
-		if (*res > 0)
+		con = read(fd, buf, BUFFER_SIZE);
+		if (con > 0)
 		{
-			buf[*res] = '\0';
-			tmp = save;
-			save = ft_strjoin(save, buf);
-			if (tmp)
-				ft_free((void *) &tmp);
+			buf[con] = '\0';
+			tmp = ft_strjoin(*keep, buf);
+			ft_free((void *) keep);
+			*keep = tmp;
 		}
+		else
+			return (0);
 	}
-	ft_free((void *) &buf);
-	return (save);
+	return (con);
 }
 
-char	*ft_get_the_rest(char *save ,int res)
-{
-	char	*env;
-
-	env = NULL;
-	if (res > 0)
-	{
-		env = ft_strdup(&save[res]);
-	}
-	return (env);
-}
 
 char	*get_next_line(int fd)
 {
-	char		*line;
-	static char	*save;
-	char		*tmp;
-	int			count;
-	int			res;
+	static char *keep;
+	char		*buf;
+	int			endofnl;
+	int			i;
+	int			con;
+	char *tmp;
 
+	con = BUFFER_SIZE;
 	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
-	save = ft_reading(fd, save, &res);
-	if (!save)
-		return (NULL); //this is true
-	line = ft_getline(save, &count);
-	if (line[count - 1] != '\n' || !line)
-		ft_free((void*) &save);
-	if (save)
+	if (!keep)
 	{
-		tmp = save;
-		save = ft_get_the_rest(save ,count);
-		if (save)
-			ft_free((void*) &tmp);
+		keep = (char *)malloc(sizeof(char));
+		keep[0] = '\0';
+		con = BUFFER_SIZE;
 	}
-	if (res < 0)
+	buf = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
+	i = ft_readline(fd, buf, &keep, con);
+	if (keep[0] == '\0')
 	{
-		line = NULL;
-		ft_free((void*) &save);
+		ft_free((void *) &keep);
+		ft_free((void *) &buf);
+		return (NULL);
 	}
-	return (line);
+	ft_free((void *) &buf);
+	buf = ft_onlyline(keep, &endofnl);
+	if (buf && (ft_strchr(buf, '\n') || ft_strlen(buf) > 0))
+	{
+		tmp = ft_the_rest(keep, endofnl);
+		ft_free((void*) &keep);
+		keep = tmp;
+	}
+	return (buf);
 }
