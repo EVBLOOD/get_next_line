@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: sakllam <sakllam@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/14 18:22:10 by sakllam           #+#    #+#             */
-/*   Updated: 2021/11/16 13:07:28 by sakllam          ###   ########.fr       */
+/*   Updated: 2021/11/16 13:14:16 by sakllam          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 char	*ft_the_rest(char *keep, int endofnl)
 {
@@ -65,7 +65,7 @@ int	ft_readline(int fd, char *buf, char **keep)
 
 char	*get_next_line(int fd)
 {
-	static char	*keep;
+	static char	*keep[65536];
 	char		*buf;
 	int			endofnl;
 	int			i;
@@ -74,20 +74,20 @@ char	*get_next_line(int fd)
 	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
 	buf = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
-	i = ft_readline(fd, buf, &keep);
-	if (keep[0] == '\0')
+	i = ft_readline(fd, buf, &keep[fd]);
+	if (keep[fd][0] == '\0')
 	{
-		ft_free((void *) &keep);
+		ft_free((void *) &keep[fd]);
 		ft_free((void *) &buf);
 		return (NULL);
 	}
 	ft_free((void *) &buf);
-	buf = ft_onlyline(keep, &endofnl);
+	buf = ft_onlyline(keep[fd], &endofnl);
 	if (buf && (ft_strchr(buf, '\n') || ft_strlen(buf) > 0))
 	{
-		tmp = ft_the_rest(keep, endofnl);
-		ft_free((void *)&keep);
-		keep = tmp;
+		tmp = ft_the_rest(keep[fd], endofnl);
+		ft_free((void *)&keep[fd]);
+		keep[fd] = tmp;
 	}
 	return (buf);
 }
